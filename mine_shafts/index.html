@@ -12,6 +12,15 @@
         border-radius: 5px;
         padding: 0 1em;
       }
+
+      #popup .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #popup .header small {
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -535,9 +544,25 @@
           });
           if (feature) {
             popup.setPosition(evt.coordinate);
-
-            element.innerHTML = `<h3 style="color: grey">${feature.get('name')}</h3><p>${feature.get('desc')}</p>`
+            element.innerHTML = `
+              <div class="header">
+                <h3 style="color: grey">
+                  ${feature.get('name')}
+                </h3>
+                <small>X</small>
+              </div>
+              <p>${feature.get('desc')}</p>
+              <p></p>
+            `
             element.hidden = false;
+          } else {
+            element.hidden = true;
+          }
+        });
+
+        document.addEventListener('keydown', function(evt) {
+          if (evt.key == 'Escape') {
+            element.hidden = true;
           }
         });
 
