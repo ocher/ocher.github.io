@@ -1,0 +1,566 @@
+<html>
+  <head>
+    <style>
+      #mapdiv {
+        width: 100%;
+        height:100%;
+      }
+
+      #popup {
+        background-color: white;
+        border: 1px solid gray;
+        border-radius: 5px;
+        padding: 0 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mapdiv"></div>
+    <div id="popup">
+      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+      <div id="popup-content"></div>
+    </div>
+
+    <!-- <script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/build/ol.js"></script> -->
+    <!-- <script src="https://raw.githubusercontent.com/openlayers/openlayers.github.io/refs/heads/master/en/v6.15.1/build/ol.js"></script> -->
+    <script src="ol_v6.15.1.js"></script>
+
+    <script>
+      const mineShafts = [
+        // szombierki
+        [18.911161422729492, 50.338465321676196, "Szyb Krystyna", "KWK Szombierki Szyb Krystyna (Kaiser Wilhelm Schacht). 540m gł. w 1930r."],
+        [18.910324573516846, 50.338383149302985, "Szyb Ewa", "KWK Szombierki Szyb Ewa (Hohenzollern Schacht). 251,72m gł. w 1930r."],
+        [18.91171932220459, 50.33797228530476, "Szyb Teresa", "KWK Szombierki Szyb Teresa (wentylacyjny, Kaiser Friedrich Schacht). 247,5m gł. w 1930r."],
+        [18.915324211120605, 50.33571246979318, "Szyb Julita", "KWK Szombierki Szyb Julita (podsadzkowy w latach 1960-1998)"],
+        [18.89898419380188, 50.32886936683141, "Szyb Jadwiga ", "KWK Szombierki Szyb Jadwiga (Sommer Schacht z 1907, posiadał bocznicę wąskotorową do lat 50, później tylko normalnotorową; podsadzkowy do 1972, póżniej budowlany). 395,4m gł. w 1930r."],
+        [18.884832859039307, 50.33720396011301, "Szyb Janina", "KWK Szombierki Szyb Janina (Gemander Schacht, Neucons. Paulus- Hohenzollern Steinkohlengrube). 253m gł. w 1930 r."],
+
+        // bobrek
+        [18.876829147338867, 50.33124730616184, "Szyb Stanisław", "KWK Bobrek Był to szyb wentylacyjno-zjazdowy Stephan-Schacht, zbudowany w latach 1910-1918 jako trzeci szyb dla kopalni Bobrek. Miał 3 m. średnicy i 294 m. głębokości. Po wojnie w 1945 roku przemianowano go na szyb Stanisław. Po likwidacji poziomu wydobywczego 501 służył do wentylacji chodników dla szkoły górniczej. Został zasypany w 1975 roku. informacja pochodzi z http://www.fazaniec.yoyo.pl/. 289,3m gł. w 1930r."],
+        [18.85554313659668, 50.33631783693273, "Szyb Barbara", "\"KWK Bobrek Szyb Barbara (Berve Schacht), najpierw wentylacyjny w 1938 przebudowany do wydobycia węgla i wydrębniony jako oddzielna kopalnia, zamknięty ok. 1983 roku. 290m gł. w 1930r."],
+        [18.860929012298584, 50.3493519039758, "Szyb Antoni", "KWK Bobrek Szyb Antoni (Anton Mies), dawny szyb Johanna kopalni galmanu Elisabeth, przebudowany w latach 1918-29 dla kopalni Bobrek. 329m gł. w 1930r."],
+        [18.862903118133545, 50.34658598998011, "Szyb Zbigniew", "KWK Bobrek Szyb Zbigniew,podsadzkowy od 1962 i wentylacyjny "],
+        [18.877644538879395, 50.34554530736167, "Szyb Bolesław", "KWK Bobrek Szyb Bolesław (Graf Hans Ulrich). 428,5m gł. w 1930r."],
+        [18.87826681137085, 50.34625735582746, "Szyb Józef", "KWK Bobrek Szyb Józef (Gräfin Johanna schacht). 433,3 m gł. w 1930r."],
+        [18.861637115478516, 50.379002781907175, "Szyb Jan", "KWK Bobrek Szyb Jan z 1969 (wentylacyjny)"],
+
+        // Centrum
+        [18.884618, 50.353008, "Szyb Wodny", "KWK Centrum Szyb Wodny, Wetter Schacht (powietrzny), Bahnhof Schahct"],
+        [18.89176368713379, 50.35366476520261, "Szyb Staszic", "KWK Centrum Szyb Staszic (Vüllers schacht, Vereinigte Karsten Centrum Grube), dawny szyb kopalni galmanu Apfel. 777m gł. w 1930r."],
+        [18.892171382904053, 50.35425347460061, "Szyb Rejtan", "KWK Centrum Szyb Rejtan (Gartner schacht, Schacht I)"],
+        [18.892042636871338, 50.35474634197086, "Szyb Skarga", "KWK Centrum Szyb Skarga (Drescher schacht, Schacht II)"],
+        [18.890197277069092, 50.35496539249303, "Szyb Budryk", "KWK Centrum Szyb Budryk"],
+        [18.923135, 50.365518, "Szyb Piekary", "KWK Centrum Szyb Piekary (Wetterschacht, Beuthen Schacht, Wilhelmsglück) wentylacyjny w latach 20, w latach 1961-2000 podsadzkowy. 77m gł. w 1912 r."],
+        [18.932362, 50.355198, "Szyb Witczak", "KWK Centrum Szyb Witczak zbudowany w latach 1961-68, podsadzkowy; Chaussee Schacht "],
+        [18.93195390701294, 50.36044132707464, "Szyb Bolko", "ZGH Orzeł Biały, Szyb Bolko (Fiedlersglück grube)"],
+        [18.906999, 50.356781, "Szyb \"Ślepy\"", "Szyb \"Ślepy\", Blind Schacht. Prawdopodobnie szyb połączony był z kopalnią Centrum bocznicą kolejową biegnącą północną stroną parku miejskiego (plan z 1927)"],
+
+        // Łagiewniki
+        [18.920109272003174, 50.33335666888407, "Szyb Rycerski I", "KWK Łagiewniki Rycerski I (Redensblick II)"],
+        [18.919572830200195, 50.33350733406658, "Szyb Rycerski II", "KWK Łagiewniki Szyb Rycerski II (Redensblick II)"],
+        [18.93521547317505, 50.32612417824566, "Szyb Marta", "KWK Łagiewniki Szyb Marta,  podsadzkowy z 1959, później budowlany"],
+        [18.94568681716919, 50.33205544969937, "Szyb Karol Miarka", "KWK Łagiewniki Szyb Karol Miarka (Carnallsfreunde) z 1893"],
+        [18.946288, 50.333159, "Szyb Karol Miarka II", "KWK Łagiewniki Szyb Karol Miarka II"],
+        [18.918821811676025, 50.32427478517341, "Szyb Drzymały", "KWK Łagiewniki Szyb Drzymały z 1848 (Schwerin) na terenie Huty Zygmunt wg mapy z 1938"],
+        [18.917942, 50.32582, "Grundmann Schacht", "Grundmann Schacht, 166,1m gł w 1912r."],
+        [18.918607234954834, 50.324685767631074, "Szyb Wentylacyny Hubertus I", "KWK Łagiewniki szyb wentylacyjny  Hubertus I na terenie Huty Zygmunt wg mapy z 1938 (Wetter Schacht I)"],
+        [18.91045331954956, 50.32275411917846, "Szyb Wentylacyny Hubertus II ", "KWK Łagiewniki szyb wentylacyjny Hubertus II na terenie Huty Zygmunt wg mapy z 1938"],
+        [18.915324211120605, 50.32661733757718, "Szyb Podsadzkowy w Łagiewnikach", "KWK Łagiewniki podsadzka?? wg mapy z 1938"],
+        [18.904037, 50.325966, "Georg Schacht", "Georg Schacht"],
+        [18.926332, 50.320884, "Wetter Schacht II", "Wetter Schacht II (wentylacyjny) cons. Steinkohlengrube Florentine. 131,18m gł. w 1912 r., 245m gł. w 1930r. "],
+
+        // Powstańców śląskich
+        [18.877944946289062, 50.38277659436702, "Szyb Kopernik", "KWK Powstańców Śląskich  (Bytom, Beuthengrube)Szyb Kopernik (Glück auf schacht), wcześniej szyb wentylacyjny (Wetterschacht) kopalni Radzionkau"],
+        [18.878931999206543, 50.38196931383797, "Szyb Skipowy", "KWK Powstańców Śląskich  (Bytom, Beuthengrube) Szyb Skipowy z 1952 roku zbudowany na miejscu szybu wentylacyjnego Wetterschacht II z 1906 r."],
+        [18.862528, 50.377838, "Szyb Zachodni", "KWK Powstańców Śląskich  (Bytom, Beuthengrube) Szyb Zachodni"],
+
+        // Powstańców śląskich Radzionków
+        [18.911118507385254, 50.37724850005941, "Szyb Karol", "KWK Powstańców Śląskich Szyb Karol, Graf Hugo Schacht "],
+        [18.909037113189697, 50.37744007846032, "Szyb Piotr", "KWK Powstańców Śląskich Szyb Piotr"],
+        [18.910410404205322, 50.37676955067212, "Szyb Wit Stwosz", "KWK Powstańców Śląskich Szyb Wit Stwosz, Gräfin Laura Schacht"],
+        [18.91193389892578, 50.37811059677068, "Szyb wentylacyjny", "KWK Powstańców Śląskich Szyb wentylacyjny, Wetter schacht I"],
+        [18.918521404266357, 50.373799956538974, "Szyb VI", "KWK Powstańców Śląskich Szyb VI, podsadzkowy 1969-2000"],
+        [18.910882472991943, 50.375387412471966, "Szyb ???", "KWK Powstańców Śląskich Szyb ???"],
+        [18.91646146774292, 50.3723219325761, "Szyb ???", "KWK Powstańców Śląskich Szyb ???"],
+        [18.898644, 50.381185, "Szyb wentylacyjno - podsadzkowy", "KWK Powstańców Śląskich szyb wentylacyjno - podsadzkowy"],
+
+        // Rozbark
+        [18.930323123931885, 50.34258745330107, "Szyb Bonczyk", "KWK Rozbark Szyb Bonczyk (Mauve schacht cons. Heinitz Grube)"],
+        [18.929743766784668, 50.342423122674184, "Szyb Stalmach", "KWK Rozbark Szyb Stalmach (Prittwitz schacht cons. Heinitz Grube). 658m gł. w 1930r."],
+        [18.958861827850342, 50.344271809445736, "Szyb Lompa", "KWK Rozbark Szyb Lompa (Römhild schacht cons. Heinitz Grube) z lat 1909-13, podsadzkowy 1965-2001. 725,5m gł. w 1930 r."],
+        [18.945494, 50.359004, "Brems Schacht", "Brems Schacht, Barbara II"],
+        [18.946094512939453, 50.358801350888015, "Szyb Barbara", "KWK Rozbark Szyb Barbara wentylacyjny. Zbudowany w latach 20 XX w. Spotykane nazwy: Nord, Barbara Schacht, Barbara II. W latach 1950-2005 podsadzkowy."],
+        [18.927684, 50.337344, "Szyb wentylacyjny", "KWK Rozbark Szyb  wentylacyjny (Wetter schacht I, cons. Heinitz Grube). 346m gł. w 1930 r."],
+
+        // Miechowice
+        [18.837604522705078, 50.35202181664253, "Szyb Jelka, M-I", "KWK Miechowice Szyb Jelka M-I"],
+        [18.83833408355713, 50.3517206032396, "Szyb Winckler, M-II", "KWK Miechowice (Preußen grube) Szyb Winckler, M-II. 544m gł. w 1930 r"],
+        [18.84807586669922, 50.36156655334769, "Szyb Północny", "KWK Miechowice Szyb Północny, podsadzkowy w latach ok.1953-1999; Miechowitz schacht"],
+        [18.83876323699951, 50.34445256602634, "Szyb Południowy", "KWK Miechowice Szyb Południowy (Süd Schacht)"],
+        [18.817133903503418, 50.35203824636776, "Szyb Zachodni", "KWK Miechowice Szyb Zachodni (West Schacht)"],
+        [18.814773559570312, 50.360728796188326, "Szyb Ignacy", "KWK Miechowice Szyb Ignacy (podsadzkowy)"],
+
+        // Rudy
+        [18.963046, 50.353213, "Grenz Schacht", "Grenz Schacht (Graniczny)"],
+        [18.95987, 50.346805, "Wolfgang Schacht", "Wolfgang Schacht (Zbyszko), 79,2m gł."],
+        [18.961029, 50.349105, "Szyb poszukiwawczy", "Szyb poszukiwawczy, Fund Schacht, 64,1m gł."],
+        [18.948240280151367, 50.34125909778978, "Szyb Chrobry", "Szyb Chrobry, Georg von Giesche Schacht Neu-Blei-Scharleygrube, ZGH Orzeł Biały "],
+        [18.881807, 50.364892, "Georg Schacht", "Georg Schacht (Jerzy), Consolidirte Neue Victoria Zink Grube (kopalnia galmanu) 88,9m gł."],
+
+        // Stare szyby
+        [18.871808, 50.357786, "Erbs Schacht", "Erbs Schacht (Dobrej Woli), 89,9m gł."],
+        [18.868203, 50.364211, "Pilger Schacht", "Pilger Schacht (Odrodzenie), 93,7 m gł."],
+        [18.867795, 50.368298, "Koch Schacht", "Koch Schacht z 1894 ruda ołowiu, 81,1m gł."],
+        [18.869319, 50.373758, "Lerche Schacht", "Lerche Schacht (Skowronek), 45m gł."],
+        [18.862034, 50.372793, "Zeisig Schacht ", "Zeisig Schacht (Czyżyk)z 1882 ołów. 54,5m gł."],
+        [18.865327835083008, 50.37506171459576, "Schwalbe Schacht", "Schwalbe Schacht(Jaskółka) z 1884, żelazo i ołów, 47m gł. "],
+        [18.860596, 50.376618, "Stephan Schacht", "Stephan Schacht (Stefan), 47,5m gł."],
+        [18.85478, 50.379313, "Uhu Schacht", "Uhu Schacht, 30m gł."],
+        [18.866004, 50.376536, "Szyb wentylacyjny", "Szyb wentylacyjny kopalni ołowiu, 30m gł."],
+        [18.893266, 50.358183, "Graf Lazy Schacht", "Graf Lazy Schacht (Stanisław), 101,6m gł."],
+        [18.936052322387695, 50.339593807908585, "Hugo Schacht", "Hugo Lazy Schacht, 39,6m gł."],
+        [18.94463539123535, 50.35494074931796, "Gerhard Schacht", "Gerhard Schach (Wschodni) ruda cynku"],
+        [18.950815200805664, 50.357843074827706, "Matthias Schacht", "Matthias Schach (Maciej); 87,8m gł."],
+        [18.94145965576172, 50.34686258858753, "Förster Schacht", "Förster Schacht (Postęp) kopalnia ołowiu Neue Fortuna"],
+        [18.946888, 50.344395, "Bertha Schacht", "Bertha Schacht (Ryszard) kopalnia ołowiu Neue Fortuna; 59m gł."],
+        [18.953948, 50.358144, "Scotti Schacht", "Scotti Schacht (Zosia); 108,8m gł."],
+        [18.947725, 50.346504, "Berg Schacht", "Berg Schacht (Karol) kopalnia ołowiu Neue Fortuna; 76,5m gł."],
+        [18.948219, 50.348914, "Julius Schacht", "Julius Schacht (Juliusz); 74,5m gł."],
+        [18.947446, 50.349749, "August Schacht", "August Schacht (Augustyn) kopalnia cynku i ołowiu Urzula; 71,7m gł."],
+        [18.946588, 50.347216, "Wiktor Schacht", "Wiktor Schacht; 56m gł."],
+        [18.938241004943848, 50.32319525428195, "Wetter Schacht", "Wetter Schacht mapa z 1916,1934"],
+        [18.930323, 50.354568, "Udo Schacht", "Udo Schacht Rococogrube, ruda cynku; 74,2 m głębokości"],
+        [18.931922, 50.359386, "Bismarck Schacht", "Bismarck Schacht; 11m głębokości"],
+        [18.929443, 50.350803, "Rossberg Schacht", "Rossberg Schacht (Matejki); 54,7m głębokości"],
+        [18.861487, 50.329133, "Fund Schacht", "Fund Schacht(szyb odkrywczy) kopalni Bergfreiheit. Nadanie 05.08.1794, należała do właściciela majątku Szombierki von Hochberga. W 1837 zakupiona przez Karola Godulę. Eksploatowana do 1856 poczym włączona do kopalni Paulus. 14,2m głębokości w 1930r "],
+        [18.864094, 50.329941, "Carl Schacht", "Carl Schacht kopalni Bergfreiheit"],
+        [18.866358, 50.330386, "Marie Schacht", "Marie Schacht kopalni Bergfreiheit"],
+        [18.865875, 50.33114, "Lucas Schacht", "Lucas Schacht kopalni Bergfreiheit"],
+        [18.893877, 50.329544, "Fund Schacht pola Schomberg", "Fund Schacht(szyb odkrywczy) pola Schomberg; 12,5m głębokości w 1930r "],
+
+        // Bezimienne
+        [18.84408473968506, 50.37091229275213, "Greif Schacht", "Greif Schacht (Gryf) Friedrichs Grube, 56m gł."],
+        [18.853976726531982, 50.37504529283878, "Möwe Schacht", "Möwe Schacht (Mewa) Friedrichs Grube z 1884, 43m gł."],
+        [18.852164, 50.365997, "Versuch Schacht", "Versuch Schacht (poszukiwawczy) kopalnii rud ołowiu \"Friedrich\" - Fiskalisches Bleierzbergwerk \"Friedrich\", 37m gł."],
+        [18.851423, 50.367044, "Szyb Kukuk", "Szyb Kukuk Friedrichs Grube, 80m gł."],
+        [18.853848, 50.364787, "Szyb Specht", "Szyb Specht (Dzięcioł) Friedrichs Grube, 38,7m gł."],
+        [18.852067, 50.364403, "Szyb ?", "Szyb ?(Poszukiwawczy), 55,3m gł."],
+        [18.859856, 50.369399, "Szyb Pfau", "Szyb Pfau (Paw) Friedrichs Grube, 57m gł."],
+        [18.858654, 50.371075, "Szyb Fasan", "Szyb Fasan (Bażant) Friedrichs Grube, 35m gł."],
+        [18.858676, 50.372197, "Reiher Fasan", "Szyb Reiher (Grzęda) Friedrichs Grube, 50m gł."],
+        [18.855425, 50.370767, "Szyb Strauss", "Szyb Strauss (Struś) Friedrichs Grube, 47,9m gł."],
+        [18.86345, 50.367003, "Szyb Geier", "Szyb Geier Friedrichs Grube (Bogdan), 80m gł."],
+        [18.85078, 50.368784, "Gimpel Schacht", "Gimpel Schacht (Gil) Friedrichs Grube, 76,4m gł."],
+        [18.844761, 50.365799, "Hugo Schacht", "Hugo Schacht, 81m gł."],
+        [18.839375, 50.36634, "Klingberg Schacht", "Klingberg Schacht (Mnich), 58,1m gł."],
+        [18.85674476623535, 50.36326392456819, "Szyb Sperber ", "Szyb Sperber (Włócznia) Friedrichs Grube, 80m gł."],
+        [18.858837, 50.364663, "Szyb Kranich", "Szyb Kranich (Żuraw) Friedrichs Grube z 1879 ruda ołowiu, 80m gł."],
+        [18.860114, 50.362808, "Szyb Magdalene", "Szyb Magdalena Friedrichs Grube, 96,5m gł."],
+        [18.860435, 50.360539, "Szyb Werner", "Szyb Werner (Wacław) Friedrichs Grube, 79m gł."],
+        [18.870907, 50.36648, "Szyb Victoria", "Szyb Victoria Friedrichs Grube, 80m gł."],
+        [18.8577, 50.366182, "Szyb Eule", "Szyb Eule (Sowa) Friedrichs Grube z 1877, 80m gł."],
+        [18.855339, 50.365648, "Storch Schacht", "Storch Schacht Friedrichs Grube, 83,5 m gł."],
+        [18.855243, 50.36855, "Schwan Schacht", "Schwan Schacht (Łabędź) Friedrichs Grube, 71,4m gł."],
+        [18.863364, 50.370151, "Staar Schacht", "Staar Schacht (Szpak) Friedrichs Grube, 50,4m gł."],
+        [18.853108, 50.372492, "Wachtel Schacht", "Wachtel Schacht (Ważka) Friedrichs Grube, 55,7m gł."],
+        [18.849471, 50.376111, "Hoffnung Schacht", "Hoffnung Schacht (Nadzieja) Friedrichs Grube, 62,1m gł."],
+        [18.848559, 50.378184, "Szyb Oczekiwanie 1", "Szyb Oczekiwanie 1, Friedrichs Grube, 45m gł."],
+        [18.84799, 50.379532, "Szyb Oczekiwanie 2", "Szyb Oczekiwanie 2, Friedrichs Grube, 45,6m gł."],
+        [18.837476, 50.373135, "Nimptsch Schacht", "Nimptsch Schacht (Norka) Friedrichs Grube z lat 1925-31, 55m gł."],
+        [18.838785, 50.372772, "Kunst Schacht", "Kunst Schacht (Sztuka), 24m gł."],
+        [18.832262, 50.375517, "Marcus Schacht", "Marcus Schacht (Marko), 40m gł."],
+        [18.826017, 50.378664, "Schulze Schacht", "Schulze Schacht (Browar), 27,7m gł."],
+        [18.820052, 50.374594, "Feliks Schacht", "Feliks Schacht, 47,1m gł."],
+        [18.823378, 50.380942, "Marie Schacht", "Marie Schacht (Maria), 37,7m gł."],
+        [18.81943, 50.380443, "Lea Schacht", "Lea Schacht (Leon), 40m gł."],
+        [18.816791, 50.380621, "Viktor Schacht", "Viktor Schacht"],
+        [18.814645, 50.379417, "Hermann Schacht", "Hermann Schacht"],
+        [18.814151, 50.377296, "Pyka Schacht", "Pyka Schacht"],
+        [18.818786, 50.377871, "Anna Schacht", "Anna Schacht, 46,3m gł."],
+        [18.814108, 50.37554, "Kern Schacht", "Kern Schacht"],
+        [18.810332, 50.376872, "Hedwig Schacht", "Hedwig Schacht"],
+        [18.810353, 50.376023, "Helene Schacht", "Helene Schacht"],
+        [18.817992, 50.382208, "Amand Schacht", "Amand Schacht"],
+        [18.816211, 50.383631, "Guido Schacht", "Guido Schacht"],
+        [18.81207, 50.383057, "Paul Schacht", "Paul Schacht"],
+        [18.812306, 50.386245, "Fritz Schacht", "Fritz Schacht"],
+        [18.822155, 50.389733, "Martha Schacht", "Martha Schacht"],
+        [18.810868, 50.380377, "Moritz Schacht", "Moritz Schacht"],
+        [18.802242, 50.382099, "Max Schacht", "Max Schacht"],
+        [18.931804, 50.346326, "Hermann Schacht", "Hermann Schacht (Jadwiga) kopalnia ołowiu Neue Fortuna; 48m gł."],
+        [18.934186, 50.34742, "Jäckel Schacht", "Jäckel Schacht (Jacek) kopalnia ołowiu Neue Fortuna"],
+        [18.934894, 50.346066, "Hugo Schacht", "Hugo Schacht kopalnia ołowiu Neue Fortuna; 64m gł. "],
+        [18.9344, 50.345833, "Szyb wentylacyjny", "Szyb wentylacyjny"],
+        [18.9394, 50.343601, "Szyb Stary", "Szyb Stary; 35,6m gł."],
+        [18.939099, 50.348558, "Szyb Anna", "Szyb Anna kopalnia cynku i ołowiu Urzula; 79,5m gł."],
+        [18.940923, 50.344176, "Szyb Jan", "Szyb Jan; 56m gł."],
+        [18.930988, 50.348284, "Szyb poszukiwawczy", "Szyb poszukiwawczy, Fund Schacht; 46,8m gł. "],
+        [18.931053, 50.347955, "Bischof Schacht", "Bischof Schacht (Biskup) kopalnia ołowiu Neue Fortuna; 54m gł. "],
+        [18.93249, 50.347627, "Hoffmann Schacht", "Hoffmann Schacht (Barbara) kopalnia ołowiu Neue Fortuna; 51,6m gł. "],
+        [18.942790031433105, 50.32289385804189, "???19 ", "19??? mapa z 1916,1934"],
+        [18.862581253051758, 50.411011817243754, "???20 ", "20??? "],
+        [18.8545560836792, 50.40783923698089, "???20 ", "20??? "],
+        [18.858633041381836, 50.40313467524264, "???21 ", "21???, żelazo "],
+        [18.838505744934082, 50.41057423259521, "???22 ", "22???, żelazo "],
+        [18.834643363952637, 50.41131265434535, "???23 ", "23???, żelazo "],
+        [18.915303, 50.354978, "West Schacht  powietrzny ", "West, Luft Schacht powietrzny (Fałata) z lat 30 XX w zasypany w 1986r. Neuhof Zink Grube (Nowy Dwór). "],
+
+        //park miejski  i knajfeld
+        [18.907991, 50.351684, "Schacht I", "Schacht I, 30m gł."],
+        [18.907809, 50.351907, "Schacht II", "Schacht II, 25m gł."],
+        [18.905969, 50.350762, "Hugo Schacht", "Hugo Schacht, 21,7m gł."],
+        [18.90599, 50.351447, "Guido Schacht", "Guido Schacht (Gwidon), 25,3m gł."],
+        [18.904638, 50.35131, "Carl Schacht", "Carl Schacht (Karol), 21,2m gł."],
+        [18.905625, 50.351762, "Szyb maszynowy ", "Szyb maszynowy, 38,4m gł."],
+        [18.904306, 50.351788, "Szyb 4 ", "Szyb 4 (poszukiwawczy), 45,1m gł."],
+        [18.904992, 50.352219, "Szyb maszynowy ", "Szyb maszynowy, 83m gł."],
+        [18.904123, 50.351315, "Szyb Laura ", "Szyb Laura, 19,9m gł."],
+        [18.904231, 50.351534, "Escher Schacht", "Escher Schacht, 27,2m gł."],
+        [18.903962, 50.351569, "Szyb Znajda", "Szyb Znajda, 29,3m gł."],
+        [18.906398, 50.352041, "Szyb poszukiwawczy", "Szyb poszukiwawczy, 31,5m gł."],
+        [18.90142, 50.354171, "Versuch Schacht", "Versuch Schacht Szyb poszukiwawczy, 115m gł."],
+        [18.901902, 50.351767, "Tellus Schacht", "Tellus Schacht (Teofil), 38,7m gł."],
+        [18.899467, 50.351165, "Widder Schacht", "Tellus Schacht (Wydra), 35,6m gł."],
+        [18.89922, 50.35202, "Osten Schacht", "Osten Schacht (Wschodni), 40m gł."],
+        [18.897471, 50.350843, "Theresia Schacht", "Theresia Schacht (Teresa) kopalni galmanu Theresia, 27,2m gł."],
+        [18.89715, 50.352268, "Szyb Płytki", "Szyb Płytki, 26m gł."],
+        [18.897836, 50.352842, "Szyb Komar", "Szyb Płytki, 35,3m gł."],
+        [18.894467, 50.351009, "Grundmann Schacht", "Grundmann Schacht (Gruda), 42,6m gł."],
+        [18.892879, 50.350297, "Peter Schacht", "Peter Schacht (Piotr), 32,7m gł."],
+        [18.891914, 50.350432, "Sandig Schacht", "Sandig Schacht (Piasek), 30m gł."],
+        [18.889146, 50.349645, "Wetter Schacht", "Wetter Schacht (powietrzny), 18,8m gł."],
+        [18.889049, 50.349926, "Fund Schacht", "Fund Schacht (Skarb, poszukiwawczy), 28,8m gł."],
+        [18.888899, 50.350063, "Ludwig Schacht", "Ludwig Schacht (Ludwik), 34,5m gł."],
+        [18.888223, 50.350747, "Krebs Schacht", "Krebs Schacht (Rak), 30m gł."],
+        [18.887397, 50.351445, "Worpisko Schacht", "Worpisko Schacht (Karczowisko), 30m gł."],
+        [18.88479, 50.351584, "Osten Schacht", "Osten Schacht (Wschodni), 33,4m gł."],
+        [18.882945, 50.351041, "Ottilie Schacht", "Ottilie Schacht (Otylia), 31,4m gł."],
+        [18.893448, 50.35202, "Szyb Gołąb", "Szyb Gołąb, 40m gł."],
+        [18.89244, 50.351931, "Szyb Karol", "Szyb Karol, 66,5m gł."],
+        [18.892418, 50.352397, "Szyb Jadwiga", "Szyb Jadwiga, 68,6m gł."],
+        [18.891635, 50.352014, "Szyb Nepomuk", "Szyb Nepomuk, 30m gł."],
+        [18.889768, 50.352008, "Szyb Teresa", "Szyb Teresa, 30m gł."],
+        [18.889929, 50.352678, "Szyb Osadnik", "Szyb Osadnik, 50m gł."],
+        [18.889897, 50.353035, "Szyb Ewa", "Szyb Ewa, 50m gł."],
+        [18.888609, 50.353035, "Max Schacht", "Max Schacht (Maksymilian), 45m gł."],
+        [18.888588, 50.35372, "Westen Schacht", "Westen Schacht (Zachodni), 75,2m gł."],
+        [18.887987, 50.352213, "Szyb Cnota", "Szyb Cnota, 35m gł."],
+        [18.886399, 50.351981, "Michael Schacht", "Michael Schacht (Michał), 35m gł."],
+        [18.883524, 50.352706, "Michael Schacht", "Michael Schacht (Michał), 62,3m gł."],
+        [18.890884, 50.355732, "Versuch Schacht", "Versuch Schacht (poszukiwawczy), 91m gł."],
+
+        //grossfeld i dabrowa miejska
+        [18.893781, 50.362673, "Frühling Schacht", "Frühling Schacht (Wyzwolenie) Consolidirte Neue Victoria Zink Grube (kopalnia galmanu), 51,1m gł."],
+        [18.88567, 50.362662, "Ernst Schacht", "Ernst Schacht (Bogusław), 83,6m gł."],
+        [18.892579, 50.36437, "Gebhard Schacht", "Gebhard Schacht (Agnieszka) Consolidirte Neue Victoria Zink Grube (kopalnia galmanu), 77,m gł."],
+        [18.879726, 50.366108, "Szyb Bolesław", "Szyb Bolesław z 1881 roku (Lebrecht schacht) Consolidirte Neue Victoria Zink Grube (kopalnia galmanu). Zasypany w 1980r."],
+        [18.880498, 50.366738, "Laura Schacht", "Laura Schacht (Kazimierz) Consolidirte Neue Victoria Zink Grube (kopalnia galmanu), 83,6m gł."],
+        [18.880284, 50.366971, "Glückauf Schacht", "Glückauf Schacht (Szczęść Boże), 70,8m gł."],
+        [18.879533, 50.367874, "Walter Schacht", "Walter Schacht (Walter), 37,7m gł."],
+        [18.879983, 50.368764, "Grenz Schacht", "Grenz Schacht (graniczny), 46,6m gł."],
+        [18.880842, 50.368066, "Fund Schacht", "Fund Schacht (Znajda), 35,8m gł."],
+        [18.884296, 50.367148, "Therese Schacht", "Therese Schacht (Teresa), 59,5m gł."],
+        [18.88376, 50.368996, "Simson Schacht", "Simson Schacht (Spółka), 37,35m gł."],
+        [18.881743, 50.370173, "Szyb Korfanty", "Szyb Korfanty, 40m gł."],
+        [18.885005, 50.367888, "Fund Schacht", "Fund Schacht (poszukiwawczy), 35,8m gł."],
+        [18.887987, 50.367983, "Versuch Schacht", "Versuch Schacht (poszukiwawczy), 40m gł."],
+        [18.887161, 50.369173, "Wetter Schacht", "Wetter Schacht (powietrzny), 40m gł."],
+        [18.885069, 50.370228, "Grabow Schacht", "Grabow Schacht (Florek), 47,3m gł (34,3m w 1912r.)."],
+        [18.886957, 50.370625, "Clara Schacht", "Clara Schacht (Klara), 41,8m gł."],
+        [18.889403, 50.369133, "Arthur Schacht", "Arthur Schacht (Artur), 53,3m gł."],
+        [18.888459, 50.371068, "Gerhard Schacht", "Gerhard Schacht (Gerwazy), 45,5m gł."],
+        [18.889972, 50.370986, "Roon Schacht", "Roon Schacht (Lech), 32,4m gł."],
+        [18.886689, 50.372382, "Marie Schacht", "Marie Schacht (Maria), 52,6m gł."],
+        [18.889672, 50.372834, "Steinmelz Schacht", "Steinmelz Schacht (Głaz), 39,8m gł."],
+        [18.892601, 50.370706, "Erbs Schacht", "Erbs Schacht (Groszek), 30,9m gł."],
+        [18.893727, 50.369597, "Neuhof Schacht", "Neuhof Schacht (Nowy Dwór), 41,1m gł."],
+        [18.894081, 50.368851, "Wasser Schacht", "Wasser Schacht (Wodny), 76,3m gł."],
+        [18.893716, 50.368367, "Carl Schacht", "Carl Schacht (Karol), 44,5m gł."],
+        [18.893545, 50.367407, "Lottner Schacht", "Lottner Schacht (Tadeusz) Neue Victoria Zink Grube (kopalnia galmanu), zlikwidowany na początku lat 40. 79,8m gł. "],
+        [18.894231, 50.366149, "Blind Schacht II", "Blind Schacht II (Ślepy), 31,7m gł."],
+        [18.895562, 50.365616, "Hermann Schacht", "Hermann Schacht (Małgorzata), 58,8m gł."],
+        [18.894231, 50.366149, "Blind Schacht I", "Blind Schacht I (Ślepy), 37m gł."],
+
+        // Nowy dwór
+        [18.90275, 50.364965, "Wetter Schacht", "Wetter Schacht (wentylacyjny) 106,5m gł"],
+        [18.899918, 50.367121, "Hugo Schacht", "Hugo Schacht 47,5m gł"],
+        [18.901956, 50.367764, "Berg Schacht", "Berg Schacht (Śnieżka) 59,5m gł"],
+        [18.898984, 50.368913, "Henckel Schacht", "Henckel Schacht 77,4m gł"],
+        [18.900143, 50.369091, "Laura Schacht", "Laura Schacht, 60m gł"],
+        [18.900486, 50.368899, "Versuch Schacht", "Versuch Schacht (poszukiwawczy), 77m gł."],
+        [18.901656, 50.368926, "Fund Schacht", "Fund Schacht (poszukiwawczy), 77m gł."],
+        [18.902889, 50.369515, "Heinrich Schacht", "Heinrich Schacht (Irena), 90m gł. Neuhof Zink Grube (Nowy Dwór)."],
+        [18.903072, 50.369583, "Maschinen Schacht", "Maschinen Schacht (Olga) z 1865 r., 97,4m gł. Neuhof Zink Grube (Nowy Dwór)"],
+        [18.901162, 50.369886, "Szyb wodny ", "Szyb wodny, 12m gł."],
+        [18.90069, 50.369973, "Walter Schacht", "Walter Schacht, 40,3m gł."],
+        [18.89834, 50.370035, "Hruby Schacht", "Hruby Schacht, 79,8m gł."],
+        [18.896044, 50.370692, "Hoffmann Schacht", "Hoffmann Schacht (Horacy) 36m gł"],
+        [18.895272, 50.371705, "Bohr Schacht", "Bohr Schacht (Wiertniczy) 36m gł"],
+        [18.894628, 50.372519, "Szyb wodny ", "Szyb wodny, 12m gł."],
+        [18.895272, 50.371705, "Moltke Schacht", "Moltke Schacht (Wybicki) 20m gł"],
+        [18.904402, 50.37213, "Hofnung Schacht", "Hofnung Schacht (Nadzieja) 37,7m gł"],
+        [18.906806, 50.371775, "Michael Schacht", "Michael Schacht (Michał) 51,7m gł"],
+        [18.908415, 50.373061, "Sand Schacht", "Sand Schacht (Piaskowył) 23,9m gł"],
+        [18.911355, 50.37198, "Westen Schacht", "Westen Schacht (Zachodni) 28,8m gł"],
+        [18.912964, 50.371104, "Knorr Schacht", "Knorr Schacht (Zgaga) 58m gł"],
+        [18.913715, 50.371665, "Walter Schacht", "Walter Schacht, 12,5m gł."],
+        [18.913393, 50.371378, "? Schacht", "? Schacht (Zielony) 25m gł"],
+        [18.913801, 50.370447, "Hermann Schacht", "Hermann Schacht 25m gł"],
+        [18.914444, 50.371172, "Osten Schacht", "Osten Schacht (Wschodni) 22,2m gł"],
+        [18.913758, 50.368605, "Wetter Schacht", "Wetter Schacht (wentylacyjny), 79m gł."],
+        [18.915153, 50.371171, "Martin Schacht", "Martin Schacht (Marcin), 21,6m gł."],
+        [18.914863, 50.370384, "? Schacht", "? Schacht (Jakub), 30m gł."],
+        [18.916322, 50.370993, "? Schacht", "? Schacht (Łąka), 17,2m gł."],
+        [18.915796, 50.370131, "? Schacht", "? Schacht (Mieszko), 47m gł."],
+        [18.916687, 50.370281, "? Schacht", "? Schacht (Poszukiwawczy), 34m gł."],
+        [18.916708, 50.370658, "? Schacht", "? Schacht (Barbara), 17m gł."],
+        [18.916891, 50.37074, "Frierdrich Schacht", "Frierdrich Schacht (Fryderyk), 26,7m gł."],
+        [18.9185, 50.370665, "Hedwig Schacht", "Hedwig Schacht (Jadwiga), 15,3m gł."],
+        [18.918564, 50.370535, "? Schacht", "? Schacht (Poszukiwawczy), 30m gł."],
+        [18.918039, 50.370973, "Wiese Schacht I", "Wiese Schacht I , 9m gł."],
+
+        // Karb
+        [18.876336, 50.35148, "Krause Schacht", "Krause Schacht (Witold), 35,8m gł."],
+        [18.874716, 50.351425, "Ostduckel Schacht", "Ostduckel Schacht (Wschodni), 38,9m gł."],
+        [18.874394, 50.351795, "Hubert Schacht", "Hubert Schacht (Konkurs), 60m gł."],
+        [18.874372, 50.350521, "Hoffnung Schacht", "Hoffnung Schacht (Nadzieja), 23,4m gł."],
+        [18.873471, 50.351493, "Hochdruck Schacht", "Hochdruck Schacht (Fugas), 72,4m gł."],
+        [18.87301, 50.349953, "Ullrich Schacht", "Ullrich Schacht (Maćko), 24m gł."],
+        [18.872484, 50.350241, "Marie Schacht", "Marie Schacht (Maria), 26,9m gł."],
+        [18.872108, 50.35202, "Willkomanen Schacht", "Willkomanen Schacht (Przełomowy), 42,6m gł."],
+        [18.870445, 50.352116, "? Schacht", "? Schacht (Dolina), 45,8m gł."],
+        [18.870692, 50.35176, "Februar Schacht", "Februar Schacht (Luty), 40,5m gł."],
+        [18.870671, 50.351603, "? Schacht", "? Schacht (Postęp), 47,5m gł."],
+        [18.870113, 50.350316, "Urban Schacht", "Urban Schacht , 27,5m gł."],
+        [18.870038, 50.351048, "Fund Schacht", "Fund Schacht (Poszukiwawczy I), 23,5m gł."],
+        [18.869609, 50.351582, "Miller Schacht", "Miller Schacht (Młynarz), 40m gł."],
+        [18.869287, 50.351945, "Fund Schacht", "Fund Schacht (Poszukiwawczy VIII), 39,3m gł."],
+        [18.868643, 50.351692, "Kaiser Schacht", "Kaiser Schacht (Cesarz), 75,2m gł."],
+        [18.868611, 50.35148, "Schacht I", "Schacht I (Szyb I), 40m gł."],
+        [18.868707, 50.351192, "?", "? (Andrzej), 35,3m gł."],
+        [18.868632, 50.351028, "?", "? (Konstantyn), 34,6m gł."],
+        [18.868632, 50.350781, "?", "? (Urszula), 24,6m gł."],
+        [18.868128, 50.350761, "Fund Schacht", "Fund Schacht (Poszukiwawczy II), 22m gł."],
+        [18.867999, 50.349741, "Max Schacht", "Max Schacht (Maksymilian), 21,8m gł."],
+        [18.866143, 50.348995, "Joseph Schacht", "Joseph Schacht (Józef), 20m gł."],
+        [18.872033, 50.34894, "Martha Schacht", "Martha Schacht, 26,6m gł."],
+        [18.866637, 50.350672, "Wolf Schacht", "Wolf Schacht (Wilk), 34,5m gł."],
+        [18.866798, 50.350788, "Fund Schacht", "Fund Schacht (Poszukiwawczy VI), 34m gł."],
+        [18.867474, 50.351863, "Nowak Schacht", "Nowak Schacht (Skarbnik), 46m gł."],
+        [18.866444, 50.351911, "? Schacht", "? Schacht (Matylda), 46,8m gł."],
+        [18.866594, 50.351726, "? Schacht", "? Schacht (Szyb 1), 30,6m gł."],
+        [18.866422, 50.351102, "Luchs Schacht", "Luchs Schacht (Łukasz), 36,2m gł."],
+        [18.866202, 50.350976, "? Schacht", "? Schacht (Łukasz), 44m gł."],
+        [18.865693, 50.351677, "Johann Schacht", "Johann Schacht (Jan), 44m gł."],
+        [18.865301, 50.351571, "Holzplatz Schacht", "Holzplatz Schacht (Drzewny), 41,6m gł."],
+        [18.868214, 50.352582, "Amalie Schacht", "Amalie Schacht (Amalia), 43m gł."],
+        [18.867345, 50.353492, "Goepel Schacht", "Goepel Schacht (Anna), 69m gł."],
+        [18.865789, 50.353629, "Schefler Schacht", "Schefler Schacht (Ślepy), 93,4m gł."],
+        [18.864899, 50.353841, "Adam Schacht", "Adam Schacht (Opolanin), 93,7m gł."],
+        [18.864523, 50.35326, "Schlegel Schacht", "Schlegel Schacht (Powietrzny), 90,2m gł."],
+        [18.865081, 50.35048, "Alfons Schacht", "Alfons Schacht (Sergiusz), 38,8m gł."],
+        [18.864727, 50.350186, "Ludwig Schacht", "Ludwig Schacht (Ludwik), 30m gł."],
+        [18.864233, 50.350179, "Louise Schacht", "Louise Schacht (Luiza), 30m gł."],
+        [18.864158, 50.350597, "Hedwig Schacht", "Hedwig Schacht (Jadwiga), 34,5m gł."],
+        [18.863987, 50.351143, "Agathe Schacht", "Agathe Schacht (Agata), 30m gł."],
+        [18.86121, 50.348919, "Michael Michael", "Agathe Schacht (Michał), 40m gł."],
+        [18.860296, 50.349529, "AnnaGoepel Schacht", "AnnaGoepel Schacht (Anna), 40m gł."],
+        [18.86021, 50.348755, "Scheffler Schacht", "Scheffler Schacht (Szafarz), 72,5m gł."],
+        [18.858612, 50.348393, "Bohr Schacht I", "Bohr Schacht I (Wiertniczy), 30m gł."],
+        [18.858622, 50.348042, "Bohr Schacht II", "Bohr Schacht II (Wiertniczy)"],
+        [18.858612, 50.347611, "Bohr Schacht III", "Bohr Schacht III (Wiertniczy)"],
+        [18.857785, 50.348166, "? Schacht", "? Schacht (Karol), 35,8m gł."],
+        [18.857732, 50.34805, "? Schacht", "? Schacht (Nadanie), 35m gł."],
+        [18.857024, 50.349316, "Schacht C", "Schacht C (Szyb C), 50,4m gł."],
+        [18.856745, 50.349515, "? Schacht", "? Schacht (Jacek), 52,8m gł."],
+        [18.856401, 50.348515, "? Schacht", "? Schacht (Bogusław), 32,7m gł."],
+        [18.856241, 50.348009, "Lober Schacht", "Lober Schacht (Laur), 50,7m gł."],
+        [18.85569, 50.348255, "? Schacht", "? Schacht (Nadzieja), 27,9m gł."],
+        [18.854685, 50.348667, "Krug Schacht", "Krug Schacht (Dzban), 52m gł."],
+        [18.853848, 50.349229, "Süd Schacht", "Süd Schacht (Południowy), 45m gł."],
+        [18.850243, 50.347188, "Florian Schacht", "Florian Schacht 69,6m gł."],
+        [18.846445, 50.345847, "? Schacht", "? Schacht (August), 39,3m gł."],
+        [18.845801, 50.345573, "? Schacht", "? Schacht (Szyb 7), 43,5m gł."],
+        [18.86065, 50.346435, "Sokrates Schacht", "Sokrates Schacht"],
+        [18.860908, 50.344149, "Bahn Schacht", "Bahn Schacht 63,2m gł."],
+        [18.858719, 50.345025, "Süd Schacht", "Süd Schacht"],
+        [18.855329, 50.346178, "Idu Schacht", "Idu Schacht, 74m gł."],
+        [18.850071, 50.345737, "Franz Schacht", "Franz Schacht, 50,9m gł."],
+        [18.86459, 50.351706, "? Schacht", "? Schacht (Barbara), 79m gł."],
+        [18.864233, 50.351897, "Michowitz Schacht", "Michowitz Schacht (Miechowice), 48,6m gł."],
+        [18.862624, 50.352479, "Nord Schacht", "Nord Schacht (Północny), 61,1m gł."],
+        [18.863354, 50.351726, "Tomscheck Schacht", "Tomscheck Schacht (Tomasz), 36m gł."],
+        [18.862828, 50.351747, "? Schacht", "? Schacht (Sebastian), 43m gł."],
+        [18.862957, 50.35098, "Albert Schacht", "Albert Schacht, 31,6m gł."],
+        [18.862023, 50.350624, "? Schacht", "? Schacht (Grzegorz), 24,6m gł."],
+        [18.861852, 50.350761, "? Schacht", "? Schacht (Antoni), 38m gł."],
+        [18.862141, 50.351021, "? Schacht", "? Schacht (Jakub), 44,3m gł."],
+        [18.86227, 50.35113, "Nante Schacht", "Nante Schacht (Ambroży), 26,3m gł."],
+        [18.86227, 50.351336, "? Schacht", "? Schacht (Stary), 40m gł."],
+        [18.862174, 50.351322, "Criminel Schacht", "Criminel Schacht (Kobra), 33,5m gł."],
+        [18.862345, 50.351664, "Freischütz Schacht", "Freischütz Schacht (Partyzant), 46m gł."],
+        [18.861669, 50.351747, "Winkler Schacht", "Winkler Schacht (Bronisław), 76,9m gł."],
+        [18.86139, 50.352356, "? Schacht", "? Schacht (Bogusław), 35,1m gł."],
+        [18.860435, 50.352041, "Unger Schacht", "Unger Schacht (Florian), 53,9m gł."],
+        [18.86095, 50.351007, "Jacob Schacht", "Jacob Schacht (Odbudowy), 44,3m gł."],
+        [18.860693, 50.350672, "Grenz Schacht", "Grenz Schacht (Graniczny), 25m gł."],
+        [18.861326, 50.350535, "Bertha Schacht", "Bertha Schacht (Wanda), 42,9m gł."],
+        [18.858773, 50.350405, "Sebastian Schacht", "Sebastian Schacht, 35m gł."],
+        [18.858, 50.350247, "Bohr Schacht", "Bohr Schacht (Wiertniczy), 39,7m gł."],
+        [18.856573, 50.350042, "? Schacht", "? Schacht (Paweł), 40m gł."],
+        [18.857228, 50.350597, "? Schacht", "? Schacht (Ludwik), 43,2m gł."],
+        [18.856874, 50.350816, "Rudolf Schacht", "Rudolf Schacht (Dorota), 48,1m gł."],
+        [18.857764, 50.351261, "West Schacht", "West Schacht (Zachodni), 44,7m gł."],
+        [18.854009, 50.349796, "? Schacht", "? Schacht (Ignacy), 35m gł."],
+        [18.853698, 50.349726, "? Schacht", "? Schacht (Szczerba), 52,9m gł."],
+        [18.85329, 50.349597, "Heinrich Schacht", "Heinrich Schacht (Henryk), 49,5m gł."],
+        [18.852957, 50.349446, "? Schacht", "? Schacht (Zdzisław), 48m gł."],
+        [18.849878, 50.349212, "Gottfried Schacht", "Gottfried Schacht (Gniewko), 45m gł."],
+        [18.848677, 50.348911, "? Schacht", "? Schacht (San), 43m gł."],
+        [18.847132, 50.348309, "? Schacht", "? Schacht (Hugo), 31,3m gł."],
+        [18.845973, 50.34738, "? Schacht", "? Schacht (Graniczny), 43m gł."],
+        [18.842915, 50.346413, "? Schacht", "? Schacht (Nadzieja), 25m gł."],
+        [18.844503, 50.347098, "? Schacht", "? Schacht (Kos), 36,9m gł."],
+        [18.844213, 50.348262, "? Schacht", "? Schacht (Weronika), 37m gł."],
+        [18.845394, 50.348707, "? Schacht", "? Schacht (Oczekiwanie), 42,5m gł."],
+        [18.845876, 50.34868, "? Schacht", "? Schacht (Rześki), 45m gł."],
+        [18.84505, 50.349173, "? Schacht", "? Schacht (Hubert), 38,8m gł."],
+        [18.846316, 50.349693, "? Schacht", "? Schacht (Franciszek), 42m gł."],
+        [18.843237, 50.349665, "? Schacht", "? Schacht (Kibic), 54m gł."],
+        [18.842572, 50.348002, "? Schacht", "? Schacht (Sroka), 37,1m gł."],
+        [18.840641, 50.349063, "? Schacht", "? Schacht (Poszukiwawczy), 52m gł."],
+        [18.83901, 50.349789, "? Schacht", "? Schacht (Poszukiwawczy II), 51,5m gł."],
+        [18.838763, 50.347106, "? Schacht", "? Schacht (Powietrzny I), 44m gł."],
+        [18.837218, 50.346846, "? Schacht", "? Schacht (Sawa), 47,5m gł."],
+        [18.836038, 50.34723, "? Schacht", "? Schacht (Poszukiwawczy IV), 45m gł."],
+        [18.835137, 50.347531, "? Schacht", "? Schacht (Poszukiwawczy V), 40m gł."],
+        [18.836811, 50.34812, "? Schacht", "? Schacht (Poszukiwawczy I), 49,5m gł."],
+        [18.848473, 50.350419, "? Schacht", "? Schacht (Franciszka), 56,6m gł."],
+        [18.847969, 50.352296, "? Schacht", "? Schacht (Augustyna), 37,5m gł."],
+        [18.851928, 50.349719, "? Schacht", "? Schacht (Powstaniec), 35m gł."],
+
+        [18.85079, 50.349926, "Clara Schacht", "Clara Schacht (Klara), 31,6m gł."],
+        [18.85078, 50.350302, "? Schacht", "? Schacht (Paulina), 42m gł."],
+        [18.850822, 50.350713, "Hoffnung Schacht", "Hoffnung Schacht (Nadzieja), 56,2m gł."],
+        [18.851037, 50.351055, "Maschinen Schacht", "Maschinen Schacht (Poszukiwawczy II), 68,2m gł."],
+        [18.851777, 50.351041, "? Schacht", "? Schacht (Poszukiwawczy), 36,7m gł."],
+        [18.8524, 50.351, "Wetter Schacht", "Wetter Schacht (Powietrzny), 54m gł."],
+        [18.852936, 50.350953, "? Schacht", "? Schacht (Poszukiwawczy), 30m gł."],
+        [18.852829, 50.351041, "? Schacht", "? Schacht (Szyb B), 50,4m gł."],
+        [18.852936, 50.351172, "? Schacht", "? Schacht (Witold), 40m gł."],
+        [18.854674, 50.350864, "? Schacht", "? Schacht (Szyb D), 48,7m gł."],
+        [18.854256, 50.351117, "Arnold Schacht", "Arnold Schacht (Stefan), 53,9m gł."],
+        [18.853687, 50.35135, "? Schacht", "? Schacht (Maszynowy), 40,5m gł."],
+        [18.854266, 50.351623, "? Schacht", "? Schacht (Maszynowy E), 40m gł."],
+        [18.854771, 50.351699, "Paul Schacht", "Paul Schacht (Paweł), 47,4m gł."],
+        [18.855146, 50.352233, "Hermann Schacht", "Hermann Schacht, 41,5m gł."],
+        [18.855532, 50.35087, "? Schacht", "? Schacht (Szczęście), 50m gł."],
+        [18.856251, 50.351623, "? Schacht", "? Schacht (Poszukiwawczy A), 43m gł."],
+        [18.85749, 50.351352, "? Schacht", "? Schacht (Wawrzyniec), 43,1m gł."],
+        [18.851316, 50.352361, "Förder Schacht", "Förder Schacht (Wydobywczy), 44,7m gł."],
+        [18.855082, 50.353472, "Park Schacht", "Park Schacht (Popiel), 74,7m gł."],
+        [18.851295, 50.354943, "? Schacht", "? Schacht (Opuszczony I), 87,9m gł."],
+        [18.851584, 50.354403, "? Schacht", "? Schacht (Opuszczony II)."],
+        [18.860157, 50.353422, "Louis Schacht", "Louis Schacht (Zbyszek), 81,2m gł."],
+        [18.864148, 50.354868, "? Schacht", "? Schacht (Poszukiwawczy), 80m gł."],
+        [18.925924, 50.36233, "? Schacht", "? Schacht (Nowy), 50m gł."],
+
+        //rudne okolice chorzowskiej (mapa 1912)
+        [18.932834, 50.341048, "Sand Schacht", "Sand Schacht"],
+        [18.933198, 50.340681, "Friedrich Schacht", "Friedrich Schacht, 29,3m gł."],
+        [18.93308, 50.340599, "Kuno Schacht", "Kuno Schacht, 33,5m gł."],
+        [18.93263, 50.340578, "Buch Schacht", "Buch Schacht"],
+        [18.9333, 50.340421, "Jacob Schacht", "Jacob Schacht"],
+        [18.933247, 50.340339, "Paul Schacht", "Paul Schacht"],
+        [18.934446, 50.339575, "Sonnenhilf Schacht", "Sonnenhilf Schacht"],
+        [18.935022, 50.340178, "Martin Schacht", "Martin Schacht, 26,6m gł."]
+      ]
+
+      const mineShaftFeatures = mineShafts.map(([lon, lat, name, desc]) => {
+        return new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat])),
+          name,
+          desc
+        });
+      });
+
+      const map = new ol.Map({
+        target: 'mapdiv',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM()
+          }),
+          new ol.layer.Vector({
+            source: new ol.source.Vector({
+              features: mineShaftFeatures
+            }),
+            style: new ol.style.Style({
+              image: new ol.style.Icon({
+                // anchor: [0.5, 46],
+                // anchorXUnits: 'fraction',
+                // anchorYUnits: 'pixels',
+                // src: 'https://openlayers.org/en/latest/examples/data/icon.png'
+
+                // License: https://pl.m.wikipedia.org/wiki/Plik:Schlaegel_und_Eisen_nach_DIN_21800.svg
+                src: 'mine.svg',
+                scale: 0.06
+              })
+            })
+          })
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([18.930323123931885, 50.34258745330107]),
+          zoom: 13
+        })
+      });
+
+      function setupPopups(map) {
+        /**
+         * Elements that make up the popup.
+         */
+        const element = document.getElementById('popup');
+
+        const popup = new ol.Overlay({
+          element: element,
+          positioning: 'bottom-center',
+          stopEvent: false,
+        });
+        map.addOverlay(popup);
+
+        // display popup on click
+        map.on('click', function (evt) {
+          const feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+            return feature;
+          });
+          if (feature) {
+            popup.setPosition(evt.coordinate);
+
+            element.innerHTML = `<h3 style="color: grey">${feature.get('name')}</h3><p>${feature.get('desc')}</p>`
+            element.hidden = false;
+          } else {
+            popup.setPosition(evt.coordinate);
+            element.innerHTML = `<h1>Hej, tu nie ma żadnego szybu! Czego klikasz?!</h1>`
+            element.hidden = false;
+
+            // element.hidden = true;
+          }
+        });
+
+        // change mouse cursor when over marker
+        map.on('pointermove', function (e) {
+          const pixel = map.getEventPixel(e.originalEvent);
+          const hit = map.hasFeatureAtPixel(pixel);
+          map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+        });
+        // Close the popup when the map is moved
+        map.on('movestart', function () {
+          element.hidden = true;
+        });
+
+      }
+
+      setupPopups(map);
+    </script>
+  </body>
+</html>
