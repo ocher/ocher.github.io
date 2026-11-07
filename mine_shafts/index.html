@@ -1,41 +1,91 @@
-<html>
+<!DOCTYPE html>
+<html lang="pl">
   <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mapa szybów – Bytom i okolice</title>
+    <link rel="icon" href="shaft.svg">
+    <link rel="stylesheet" href="lib/leaflet-1.9.4/leaflet.css">
+    <script src="lib/leaflet-1.9.4/leaflet.js"></script>
     <style>
-      #mapdiv {
-        width: 100%;
-        height: 100%;
-      }
+      html, body, #map { margin: 0; height: 100%; }
+      .leaflet-popup-content { max-height: 50vh; overflow: auto; font-size: 14px; }
+      .leaflet-popup-content h3 { margin: 8px 0 2px; font-size: 16px; color: #5a4a2f; }
+      .leaflet-popup-content p { margin: 0; }
 
-      #popup {
-        background-color: white;
-        border: 1px solid gray;
-        border-radius: 5px;
-        padding: 0 1em;
+      #info-button {
+        position: absolute; top: 10px; right: 10px; z-index: 1000;
+        width: 34px; height: 34px; border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 50%;
+        background: white; font: bold italic 18px Georgia, serif; color: #5a4a2f; cursor: pointer;
       }
-
-      #popup .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      #popup .header small {
-        cursor: pointer;
-      }
+      #info { max-width: min(560px, 90vw); border: none; border-radius: 10px; padding: 20px 24px;
+              font: 14px/1.5 system-ui, sans-serif; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+      #info::backdrop { background: rgba(0, 0, 0, 0.3); }
+      #info h2 { margin-top: 0; font-size: 18px; color: #5a4a2f; }
+      #info h3 { margin: 16px 0 4px; font-size: 15px; }
+      #info ul { margin: 0; padding-left: 20px; }
+      #info form { text-align: right; margin-top: 16px; }
     </style>
   </head>
   <body>
-    <div id="mapdiv"></div>
-    <div id="popup">
-      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-      <div id="popup-content"></div>
-    </div>
+    <div id="map"></div>
 
-    <script src="ol_v6.15.1.js"></script>
+    <!--
+      Źródła danych:
+      - Szyby i opisy: „Szyby bytomskich kopalń”, autor: Pancho
+        http://www.bytom.webd.pl/kopalnie/ (strona już nie działa; kopia: kopalnie_original.html)
+      - Opis Szybu Stanisław: http://www.fazaniec.yoyo.pl/
+      - Inne mapy szybów (niewykorzystane tutaj): patrz opis_mapy_szybow.txt i pliki .kmz
+    -->
+    <button id="info-button" title="Źródła danych" onclick="document.getElementById('info').showModal()">i</button>
+    <dialog id="info" onclick="if (event.target === this) this.close()">
+      <h2>Mapa szybów – Bytom i okolice</h2>
+
+      <h3>Źródło danych</h3>
+      <ul>
+        <li>
+          Położenie i opisy szybów pochodzą ze strony
+          <a href="http://www.bytom.webd.pl/kopalnie/" target="_blank">„Szyby bytomskich kopalń”</a>
+          (autor: Pancho). Strona już nie działa.
+        </li>
+        <li>
+          Opis Szybu Stanisław autor zaczerpnął ze strony
+          <a href="http://www.fazaniec.yoyo.pl/" target="_blank">fazaniec.yoyo.pl</a>.
+        </li>
+        <li>
+          Część opisów powołuje się na historyczne mapy i plany z lat 1912, 1916, 1927, 1934 i 1938.
+        </li>
+      </ul>
+
+      <h3>Więcej o szybach</h3>
+      <ul>
+        <li>
+          <a href="https://www.google.com/maps/d/viewer?mid=1-6F_sYwndlPT3Fp-WOsdMaKcH-I" target="_blank">Mapa szybów – Górnośląskie Zagłębie Węglowe</a>
+          (Google My Maps)
+        </li>
+        <li>
+          <a href="https://www.google.com/maps/d/viewer?mid=1cQVBrK5Afs9NbTNsyOEvXD53Jds" target="_blank">Mapa szybów – Dolnośląskie Zagłębie Węglowe</a>
+          (Google My Maps)
+        </li>
+        <li>
+          <a href="https://forum.bytomski.pl/historia-miasta-i-zabytki/92121-szyby-bytomskich-kopaln-wegla-kamiennego" target="_blank">Szyby bytomskich kopalń węgla kamiennego</a>
+          – wątek na forum bytomski.pl
+        </li>
+      </ul>
+
+      <h3>Mapa</h3>
+      <ul>
+        <li>
+          Podkład: <a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap</a>
+          lub <a href="https://www.esri.com/" target="_blank">Esri</a> (przy otwarciu strony z pliku).
+        </li>
+        <li>Biblioteka: <a href="https://leafletjs.com/" target="_blank">Leaflet</a> 1.9.4.</li>
+      </ul>
+
+      <form method="dialog"><button>Zamknij</button></form>
+    </dialog>
 
     <script>
-      // The following data has been extracted and then processed from this page,
-      // which doesn't exist anymore:
-      // http://www.bytom.webd.pl/kopalnie/
       const mineShafts = [
         // szombierki
         [18.911161422729492, 50.338465321676196, "Szyb Krystyna", "KWK Szombierki Szyb Krystyna (Kaiser Wilhelm Schacht). 540m gł. w 1930r."],
@@ -486,100 +536,37 @@
         [18.935022, 50.340178, "Martin Schacht", "Martin Schacht, 26,6m gł."]
       ]
 
-      const mineShaftFeatures = mineShafts.map(([lon, lat, name, desc]) => {
-        return new ol.Feature({
-          geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat])),
-          name,
-          desc
-        });
-      });
+      const map = L.map('map').setView([50.355, 18.89], 14);
 
-      const map = new ol.Map({
-        target: 'mapdiv',
-        layers: [
-          new ol.layer.Tile({
-            source: new ol.source.OSM()
-          }),
-          new ol.layer.Vector({
-            source: new ol.source.Vector({
-              features: mineShaftFeatures
-            }),
-            style: new ol.style.Style({
-              image: new ol.style.Icon({
-                // anchor: [0.5, 46],
-                // anchorXUnits: 'fraction',
-                // anchorYUnits: 'pixels',
-                // src: 'https://openlayers.org/en/latest/examples/data/icon.png'
-
-                // License: https://pl.m.wikipedia.org/wiki/Plik:Schlaegel_und_Eisen_nach_DIN_21800.svg
-                src: 'mine.svg',
-                scale: 0.06
-              })
-            })
-          })
-        ],
-        view: new ol.View({
-          center: ol.proj.fromLonLat([18.930323123931885, 50.34258745330107]),
-          zoom: 13
-        })
-      });
-
-      function setupPopups(map) {
-        /**
-         * Elements that make up the popup.
-         */
-        const element = document.getElementById('popup');
-
-        const popup = new ol.Overlay({
-          element: element,
-          positioning: 'bottom-center',
-          stopEvent: false,
-        });
-        map.addOverlay(popup);
-
-        // display popup on click
-        map.on('click', function (evt) {
-          const feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-            return feature;
-          });
-          if (feature) {
-            popup.setPosition(evt.coordinate);
-            element.innerHTML = `
-              <div class="header">
-                <h3 style="color: grey">
-                  ${feature.get('name')}
-                </h3>
-                <small>X</small>
-              </div>
-              <p>${feature.get('desc')}</p>
-              <p></p>
-            `
-            element.hidden = false;
-          } else {
-            element.hidden = true;
-          }
-        });
-
-        document.addEventListener('keydown', function(evt) {
-          if (evt.key == 'Escape') {
-            element.hidden = true;
-          }
-        });
-
-        // change mouse cursor when over marker
-        map.on('pointermove', function (e) {
-          const pixel = map.getEventPixel(e.originalEvent);
-          const hit = map.hasFeatureAtPixel(pixel);
-          map.getTargetElement().style.cursor = hit ? 'pointer' : '';
-        });
-        // Close the popup when the map is moved
-        map.on('movestart', function () {
-          element.hidden = true;
-        });
-
+      // Kafelki OSM wymagają nagłówka Referer, którego przeglądarka nie wysyła dla
+      // stron otwartych z pliku (file://) — wtedy używamy mapy Esri.
+      if (location.protocol === 'file:') {
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 19,
+          attribution: 'Tiles © Esri, © OpenStreetMap contributors',
+        }).addTo(map);
+      } else {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
       }
 
-      setupPopups(map);
+      const icon = L.icon({
+        iconUrl: 'shaft.svg',
+        iconSize: [26, 34],
+        iconAnchor: [13, 34],
+        popupAnchor: [0, -30],
+      });
+
+      // Szyby o tych samych współrzędnych dostają jedną wspólną pinezkę
+      const places = Map.groupBy(mineShafts, ([lon, lat]) => `${lat},${lon}`);
+
+      for (const shafts of places.values()) {
+        const [lon, lat] = shafts[0];
+        const html = shafts.map(([, , name, desc]) => `<h3>${name}</h3><p>${desc}</p>`).join('');
+        L.marker([lat, lon], { icon, title: shafts[0][2] }).bindPopup(html).addTo(map);
+      }
     </script>
   </body>
 </html>

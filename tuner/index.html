@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14110f">
+  <title>Guitar tuner</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8E%B8%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f1ec;
+      --surface: #ffffff;
+      --surface-2: #ece7df;
+      --text: #1b1714;
+      --muted: #6f655c;
+      --line: #d9d2c7;
+      --ok: #16a34a;
+      --ok-soft: rgba(22, 163, 74, 0.14);
+      --close: #84cc16;
+      --warn: #d97706;
+      --bad: #dc2626;
+      --accent: #b45309;
+      --needle: #1b1714;
+      --wound: #b08850;
+      --plain: #c9ced4;
+      --nylon: #eee8d8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #14110f;
+        --surface: #1f1b18;
+        --surface-2: #2a2521;
+        --text: #f2ede6;
+        --muted: #a39a90;
+        --line: #3a332d;
+        --ok: #22c55e;
+        --ok-soft: rgba(34, 197, 94, 0.16);
+        --close: #a3e635;
+        --warn: #f59e0b;
+        --bad: #f87171;
+        --accent: #f59e0b;
+        --needle: #f2ede6;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { margin: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.4;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .app {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      display: grid;
+      gap: 12px;
+      grid-template-areas: "header" "readout" "controls" "guitar" "hint";
+    }
+
+    header { grid-area: header; display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+    header .subtitle { flex: 1 1 100%; }
+    #instrument {
+      margin-left: auto;
+      font: inherit; font-weight: 600;
+      min-height: 40px; padding: 0 34px 0 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 16px;
+      appearance: none;
+      cursor: pointer;
+    }
+    .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .lang button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 0; font-size: 0.85rem; background: var(--surface); color: var(--muted); }
+    .lang button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+    #instrument:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    h1 { font-size: 1.25rem; margin: 0; }
+    .subtitle { color: var(--muted); font-size: 0.85rem; }
+
+    /* ---------- readout ---------- */
+    .readout {
+      grid-area: readout;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 10px 14px 14px;
+      text-align: center;
+      transition: background-color 0.25s, border-color 0.25s;
+      --state: var(--muted);
+    }
+    .readout[data-state="flat"], .readout[data-state="sharp"] { --state: var(--warn); }
+    .readout[data-state="close"] { --state: var(--close); }
+    .readout[data-state="tuned"] { --state: var(--ok); background: var(--ok-soft); border-color: var(--ok); }
+
+    .note-row { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; }
+    .note { font-size: clamp(52px, 15vw, 68px); font-weight: 700; line-height: 1; color: var(--state); font-variant-numeric: tabular-nums; transition: color 0.2s; }
+    .note sub { font-size: 24px; font-weight: 600; margin-left: 2px; }
+    .string-info { color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+
+    .meter { position: relative; height: 54px; margin: 8px 4px 2px; }
+    .meter-track {
+      position: absolute; inset: 18px 0 18px;
+      border-radius: 9px;
+      background: linear-gradient(90deg, var(--bad) 0%, var(--warn) 25%, var(--close) 42%, var(--ok) 50%, var(--close) 58%, var(--warn) 75%, var(--bad) 100%);
+      opacity: 0.28;
+    }
+    .meter-zone {
+      position: absolute; top: 12px; bottom: 12px;
+      left: 45%; width: 10%;
+      border: 2px solid var(--ok);
+      border-radius: 8px;
+      background: var(--ok-soft);
+    }
+    .meter-tick { position: absolute; top: 0; width: 1px; height: 8px; background: var(--muted); transform: translateX(-50%); }
+    .meter-tick.major { height: 12px; width: 2px; }
+    .meter-label { position: absolute; bottom: -2px; font-size: 11px; color: var(--muted); transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+    .needle {
+      position: absolute; top: 4px; bottom: 4px; left: 50%;
+      width: 6px; margin-left: -3px;
+      border-radius: 3px;
+      background: var(--state);
+      box-shadow: 0 0 0 2px var(--surface);
+      transition: left 0.12s linear, background-color 0.2s, opacity 0.2s;
+    }
+    .readout[data-state="idle"] .needle, .readout[data-state="listening"] .needle, .readout[data-state="far"] .needle { opacity: 0; }
+    .readout[data-state="far"] { --state: var(--accent); }
+    .readout[data-state="far"] .instruction { color: var(--accent); }
+
+    .meter-captions { display: flex; justify-content: space-between; margin: 4px 4px 0; font-size: 12px; color: var(--muted); }
+    .readout[data-state="flat"] #cap-low, .readout[data-state="sharp"] #cap-high { color: var(--warn); font-weight: 700; }
+    .needle.off-scale { animation: blink 0.6s infinite alternate; }
+    @keyframes blink { to { opacity: 0.35; } }
+
+    .history { display: block; width: calc(100% - 8px); height: 56px; margin: 2px 4px 6px; border-radius: 6px; background: var(--surface-2); }
+    .readout[data-state="tuned"] .history { background: transparent; }
+
+    .numbers { display: flex; justify-content: center; gap: 16px; min-height: 1.6em; font-variant-numeric: tabular-nums; }
+    .cents { font-weight: 700; font-size: 1.15rem; color: var(--state); }
+    .freq { color: var(--muted); align-self: center; }
+    .instruction { margin-top: 4px; font-size: 1.1rem; font-weight: 600; min-height: 1.5em; color: var(--text); }
+    .readout[data-state="flat"] .instruction, .readout[data-state="sharp"] .instruction { color: var(--warn); }
+    .readout[data-state="tuned"] .instruction { color: var(--ok); }
+
+    .level { height: 4px; margin-top: 10px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+    .level > div { height: 100%; background: var(--muted); transform-origin: left; transform: scaleX(0); transition: transform 0.08s linear; }
+
+    /* ---------- controls ---------- */
+    .controls { grid-area: controls; display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      font: inherit; font-weight: 600;
+      min-height: 44px; padding: 0 12px;
+      white-space: nowrap;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.45; cursor: default; }
+    button:focus-visible, .peg:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    #toggle { flex: 1 1 100%; background: var(--accent); color: #fff; border-color: transparent; font-size: 1.05rem; min-height: 52px; }
+    #toggle.is-running { background: var(--surface-2); color: var(--text); border-color: var(--line); }
+    #auto[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+    #tone, #reset { flex: 1; }
+    #tone svg { width: 16px; height: 16px; vertical-align: -2px; margin-right: 6px; }
+
+    .error { flex: 1 1 100%; margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(220, 38, 38, 0.12); color: var(--bad); font-size: 0.9rem; }
+    .hint { grid-area: hint; color: var(--muted); font-size: 0.85rem; margin: 0; text-align: center; }
+
+    /* ---------- headstock ---------- */
+    .guitar { grid-area: guitar; display: flex; justify-content: center; }
+    .headstock { width: 100%; max-width: 380px; max-height: 50vh; overflow: visible; user-select: none; }
+
+    .hs-string { stroke: var(--plain); stroke-linecap: round; transition: stroke 0.2s; }
+    .hs-string.wound { stroke: var(--wound); }
+    .hs-string.nylon { stroke: var(--nylon); }
+    .hs-string.st-tuned { stroke: var(--ok); }
+    .hs-string.is-active { stroke: var(--accent); filter: drop-shadow(0 0 3px var(--accent)); }
+    .hs-string.is-active.st-tuned, .hs-string.is-active.st-close { stroke: var(--ok); filter: drop-shadow(0 0 3px var(--ok)); }
+    .hs-string.ringing { animation: ring 70ms linear infinite alternate; transform-box: fill-box; }
+    @keyframes ring { from { transform: translateX(-0.9px); } to { transform: translateX(0.9px); } }
+
+    .peg { cursor: pointer; outline: none; }
+    .peg-hit { fill: transparent; }
+    .peg-ring { fill: none; stroke: var(--line); stroke-width: 4; transition: stroke 0.2s; }
+    .peg-button { fill: url(#hs-pearl); stroke: #8d8576; stroke-width: 1.5; transition: transform 0.15s; transform-box: fill-box; transform-origin: center; }
+    .peg:hover .peg-button { transform: scale(1.06); }
+    .peg-label { font: 700 20px system-ui, sans-serif; fill: #2a221c; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+    .peg-number { font: 600 11px system-ui, sans-serif; fill: var(--muted); text-anchor: middle; pointer-events: none; }
+    .peg-badge { font: 700 14px system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; fill: var(--muted); font-variant-numeric: tabular-nums; }
+
+    .peg.st-flat .peg-ring, .peg.st-sharp .peg-ring { stroke: var(--warn); }
+    .peg.st-close .peg-ring { stroke: var(--close); }
+    .peg.st-tuned .peg-ring { stroke: var(--ok); }
+    .peg.is-selected .peg-ring { stroke-dasharray: 6 4; }
+    .peg.is-active .peg-ring { stroke-width: 6; }
+    .peg.is-candidate .peg-ring { stroke: var(--accent); stroke-width: 6; stroke-dasharray: 7 5; animation: invite 0.8s ease-in-out infinite alternate; }
+    @keyframes invite { to { stroke-opacity: 0.3; } }
+    .peg.is-active .peg-button { transform: scale(1.08); }
+    .peg-badge.st-flat, .peg-badge.st-sharp { fill: var(--warn); }
+    .peg-badge.st-close { fill: var(--close); }
+    .peg-badge.st-tuned { fill: var(--ok); font-size: 20px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hs-string.ringing, .needle.off-scale, .peg.is-candidate .peg-ring { animation: none; }
+      .needle { transition: none; }
+    }
+
+    /* Desktop: readout + controls on the left, guitar on the right */
+    @media (min-width: 820px) {
+      header .subtitle { flex: 0 1 auto; order: 1; }
+      #instrument { order: 2; }
+      .app {
+        padding-top: 32px;
+        column-gap: 32px;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: "header header" "readout guitar" "controls guitar" "hint guitar";
+        align-content: start;
+      }
+      .headstock { max-height: 70vh; }
+      .hint { text-align: left; }
+    }
+  </style>
+<script type="module" crossorigin src="./simple-ym8bn0m3.js"></script></head>
+
+<body>
+  <main class="app">
+    <header>
+      <h1 id="title">Tuner</h1>
+      <div class="lang" id="lang" role="group" aria-label="Język / Language">
+        <button type="button" data-lang="pl" lang="pl">PL</button><button type="button" data-lang="en" lang="en">EN</button>
+      </div>
+      <select id="instrument"></select>
+      <span class="subtitle" id="subtitle"></span>
+    </header>
+
+    <section class="readout" id="readout" data-state="idle" aria-live="polite">
+      <div class="note-row">
+        <div class="note"><span id="note-letter">–</span><sub id="note-octave"></sub></div>
+      </div>
+      <div class="string-info" id="string-info">&nbsp;</div>
+
+      <div class="meter" aria-hidden="true">
+        <div class="meter-track"></div>
+        <div class="meter-zone"></div>
+        <div class="meter-tick major" style="left:0%"></div>
+        <div class="meter-tick" style="left:10%"></div>
+        <div class="meter-tick" style="left:20%"></div>
+        <div class="meter-tick" style="left:30%"></div>
+        <div class="meter-tick" style="left:40%"></div>
+        <div class="meter-tick major" style="left:50%"></div>
+        <div class="meter-tick" style="left:60%"></div>
+        <div class="meter-tick" style="left:70%"></div>
+        <div class="meter-tick" style="left:80%"></div>
+        <div class="meter-tick" style="left:90%"></div>
+        <div class="meter-tick major" style="left:100%"></div>
+        <span class="meter-label" style="left:4%">−50</span>
+        <span class="meter-label" style="left:25%">−25</span>
+        <span class="meter-label" style="left:50%">0</span>
+        <span class="meter-label" style="left:75%">+25</span>
+        <span class="meter-label" style="left:96%">+50</span>
+        <div class="needle" id="needle"></div>
+      </div>
+      <div class="meter-captions" aria-hidden="true"><span id="cap-low"></span><span id="cap-high"></span></div>
+      <canvas class="history" id="history" aria-hidden="true"></canvas>
+
+      <div class="numbers">
+        <span class="cents" id="cents"></span>
+        <span class="freq" id="freq"></span>
+      </div>
+      <div class="instruction" id="instruction"></div>
+      <div class="level" aria-hidden="true"><div id="level-bar"></div></div>
+    </section>
+
+    <section class="controls">
+      <button id="toggle" type="button">Start</button>
+      <button id="auto" type="button" aria-pressed="true">Auto</button>
+      <button id="tone" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg><span>Reference tone</span>
+      </button>
+      <button id="reset" type="button">Reset</button>
+      <p class="error" id="error" role="alert" hidden></p>
+    </section>
+
+    <section class="guitar" id="guitar"></section>
+
+    <p class="hint" id="hint"></p>
+  </main>
+
+  
+</body>
+
+</html>

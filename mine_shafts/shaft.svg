@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+  <!-- Pinezka z symbolem górniczym (pyrlik i żelazko) -->
+  <path d="M16 1.5C8 1.5 1.5 8 1.5 16c0 10.5 14.5 24.5 14.5 24.5S30.5 26.5 30.5 16C30.5 8 24 1.5 16 1.5z"
+        fill="#2d2a26" stroke="#ffffff" stroke-width="2"/>
+  <g fill="#f2c14e">
+    <g transform="rotate(45 16 16)">
+      <rect x="15" y="8.5" width="2" height="15" rx="1"/>
+      <rect x="11.5" y="7" width="9" height="4" rx="1"/>
+    </g>
+    <g transform="rotate(-45 16 16)">
+      <rect x="15" y="8.5" width="2" height="15" rx="1"/>
+      <path d="M11 9.5 L16 7 L21 9.5 L21 11 L11 11 Z"/>
+    </g>
+  </g>
+</svg>
