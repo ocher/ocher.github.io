@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#14110f">
   <title>Guitar tuner</title>
+  <link rel="manifest" href="./manifest-wpar0d1d.webmanifest">
+  <link rel="apple-touch-icon" href="./apple-touch-icon-a0q4k5bt.png">
+  <meta name="apple-mobile-web-app-title" content="Tuner">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8E%B8%3C/text%3E%3C/svg%3E">
   <style>
     :root {
@@ -173,7 +176,7 @@
     #toggle.is-running { background: var(--surface-2); color: var(--text); border-color: var(--line); }
     #auto[aria-pressed="true"] { background: var(--text); color: var(--bg); }
     #tone, #reset { flex: 1; }
-    #tone svg { width: 16px; height: 16px; vertical-align: -2px; margin-right: 6px; }
+    #tone svg, #reset svg { width: 16px; height: 16px; vertical-align: -2px; margin-right: 6px; }
 
     .error { flex: 1 1 100%; margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(220, 38, 38, 0.12); color: var(--bad); font-size: 0.9rem; }
     .hint { grid-area: hint; color: var(--muted); font-size: 0.85rem; margin: 0; text-align: center; }
@@ -220,6 +223,57 @@
       .needle { transition: none; }
     }
 
+    /* On desktop the wrapper is transparent: its children are cells of the .app grid. */
+    .screen { display: contents; }
+
+    /* Phone: readout and guitar fill one screen, compact buttons at the bottom
+       (within thumb reach); the hint and diagnostics are below the fold. */
+    @media (max-width: 819.98px) {
+      .app { display: block; padding: 0 16px max(16px, env(safe-area-inset-bottom)); }
+      .screen {
+        display: flex; flex-direction: column; gap: 8px;
+        min-height: 100vh; min-height: 100dvh;
+        padding: max(8px, env(safe-area-inset-top)) 0 max(10px, env(safe-area-inset-bottom));
+      }
+      header { flex-wrap: nowrap; }
+      header .subtitle { display: none; }
+      h1 { font-size: 1.15rem; }
+      #instrument { min-height: 36px; min-width: 0; }
+
+      .readout { padding: 6px 12px 10px; border-radius: 16px; }
+      .note-row { min-height: 50px; }
+      .note { font-size: clamp(42px, 12vw, 54px); }
+      .note sub { font-size: 20px; }
+      .meter { height: 46px; margin-top: 4px; }
+      .meter-track { inset: 15px 0 15px; }
+      .meter-zone { top: 10px; bottom: 10px; }
+      .meter-captions { margin-top: 2px; }
+      .history { height: 40px; margin-bottom: 4px; }
+      .instruction { margin-top: 0; font-size: 1rem; }
+      .level { margin-top: 8px; }
+
+      /* The headstock scales to whatever height is left. */
+      .guitar { position: relative; flex: 1 1 0; min-height: 150px; }
+      .headstock { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; }
+
+      .controls { gap: 6px; }
+      .controls button { position: relative; min-height: 44px; padding: 0 12px; }
+      #toggle { flex: 1 1 auto; font-size: 1rem; min-height: 44px; }
+      #tone, #reset { flex: 0 0 auto; min-width: 46px; }
+      #tone svg, #reset svg { width: 20px; height: 20px; margin: 0; vertical-align: -4px; }
+      /* Icon-only buttons; the text stays for screen readers. */
+      #tone span, #reset span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .error { order: -1; }
+
+      .hint { margin-top: 8px; }
+    }
+
+    @media (max-width: 819.98px) and (max-height: 680px) {
+      .history { height: 28px; }
+      .note-row { min-height: 44px; }
+      .note { font-size: 42px; }
+    }
+
     /* Desktop: readout + controls on the left, guitar on the right */
     @media (min-width: 820px) {
       header .subtitle { flex: 0 1 auto; order: 1; }
@@ -235,68 +289,73 @@
       .hint { text-align: left; }
     }
   </style>
-<script type="module" crossorigin src="./simple-9cvgt7z1.js"></script></head>
+<script type="module" crossorigin src="./index-298d0cgf.js"></script></head>
 
 <body>
   <main class="app">
-    <header>
-      <h1 id="title">Tuner</h1>
-      <div class="lang" id="lang" role="group" aria-label="Język / Language">
-        <button type="button" data-lang="pl" lang="pl">PL</button><button type="button" data-lang="en" lang="en">EN</button>
-      </div>
-      <select id="instrument"></select>
-      <span class="subtitle" id="subtitle"></span>
-    </header>
+    <!-- Phone: everything needed while tuning fits on one screen. -->
+    <div class="screen">
+      <header>
+        <h1 id="title">Tuner</h1>
+        <div class="lang" id="lang" role="group" aria-label="Język / Language">
+          <button type="button" data-lang="pl" lang="pl">PL</button><button type="button" data-lang="en" lang="en">EN</button>
+        </div>
+        <select id="instrument"></select>
+        <span class="subtitle" id="subtitle"></span>
+      </header>
 
-    <section class="readout" id="readout" data-state="idle" aria-live="polite">
-      <div class="note-row">
-        <div class="note"><span id="note-letter">–</span><sub id="note-octave"></sub></div>
-      </div>
-      <div class="string-info" id="string-info">&nbsp;</div>
+      <section class="readout" id="readout" data-state="idle" aria-live="polite">
+        <div class="note-row">
+          <div class="note"><span id="note-letter">–</span><sub id="note-octave"></sub></div>
+        </div>
+        <div class="string-info" id="string-info">&nbsp;</div>
 
-      <div class="meter" aria-hidden="true">
-        <div class="meter-track"></div>
-        <div class="meter-zone"></div>
-        <div class="meter-tick major" style="left:0%"></div>
-        <div class="meter-tick" style="left:10%"></div>
-        <div class="meter-tick" style="left:20%"></div>
-        <div class="meter-tick" style="left:30%"></div>
-        <div class="meter-tick" style="left:40%"></div>
-        <div class="meter-tick major" style="left:50%"></div>
-        <div class="meter-tick" style="left:60%"></div>
-        <div class="meter-tick" style="left:70%"></div>
-        <div class="meter-tick" style="left:80%"></div>
-        <div class="meter-tick" style="left:90%"></div>
-        <div class="meter-tick major" style="left:100%"></div>
-        <span class="meter-label" style="left:4%">−50</span>
-        <span class="meter-label" style="left:25%">−25</span>
-        <span class="meter-label" style="left:50%">0</span>
-        <span class="meter-label" style="left:75%">+25</span>
-        <span class="meter-label" style="left:96%">+50</span>
-        <div class="needle" id="needle"></div>
-      </div>
-      <div class="meter-captions" aria-hidden="true"><span id="cap-low"></span><span id="cap-high"></span></div>
-      <canvas class="history" id="history" aria-hidden="true"></canvas>
+        <div class="meter" aria-hidden="true">
+          <div class="meter-track"></div>
+          <div class="meter-zone"></div>
+          <div class="meter-tick major" style="left:0%"></div>
+          <div class="meter-tick" style="left:10%"></div>
+          <div class="meter-tick" style="left:20%"></div>
+          <div class="meter-tick" style="left:30%"></div>
+          <div class="meter-tick" style="left:40%"></div>
+          <div class="meter-tick major" style="left:50%"></div>
+          <div class="meter-tick" style="left:60%"></div>
+          <div class="meter-tick" style="left:70%"></div>
+          <div class="meter-tick" style="left:80%"></div>
+          <div class="meter-tick" style="left:90%"></div>
+          <div class="meter-tick major" style="left:100%"></div>
+          <span class="meter-label" style="left:4%">−50</span>
+          <span class="meter-label" style="left:25%">−25</span>
+          <span class="meter-label" style="left:50%">0</span>
+          <span class="meter-label" style="left:75%">+25</span>
+          <span class="meter-label" style="left:96%">+50</span>
+          <div class="needle" id="needle"></div>
+        </div>
+        <div class="meter-captions" aria-hidden="true"><span id="cap-low"></span><span id="cap-high"></span></div>
+        <canvas class="history" id="history" aria-hidden="true"></canvas>
 
-      <div class="numbers">
-        <span class="cents" id="cents"></span>
-        <span class="freq" id="freq"></span>
-      </div>
-      <div class="instruction" id="instruction"></div>
-      <div class="level" aria-hidden="true"><div id="level-bar"></div></div>
-    </section>
+        <div class="numbers">
+          <span class="cents" id="cents"></span>
+          <span class="freq" id="freq"></span>
+        </div>
+        <div class="instruction" id="instruction"></div>
+        <div class="level" aria-hidden="true"><div id="level-bar"></div></div>
+      </section>
 
-    <section class="controls">
-      <button id="toggle" type="button">Start</button>
-      <button id="auto" type="button" aria-pressed="true">Auto</button>
-      <button id="tone" type="button" disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg><span>Reference tone</span>
-      </button>
-      <button id="reset" type="button">Reset</button>
-      <p class="error" id="error" role="alert" hidden></p>
-    </section>
+      <section class="guitar" id="guitar"></section>
 
-    <section class="guitar" id="guitar"></section>
+      <section class="controls">
+        <button id="toggle" type="button">Start</button>
+        <button id="auto" type="button" aria-pressed="true">Auto</button>
+        <button id="tone" type="button" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg><span>Reference tone</span>
+        </button>
+        <button id="reset" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span>Reset</span>
+        </button>
+        <p class="error" id="error" role="alert" hidden></p>
+      </section>
+    </div>
 
     <p class="hint" id="hint"></p>
 
