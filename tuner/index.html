@@ -65,7 +65,7 @@
       padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
       display: grid;
       gap: 12px;
-      grid-template-areas: "header" "readout" "controls" "guitar" "hint";
+      grid-template-areas: "header" "readout" "controls" "guitar" "hint" "debug";
     }
 
     header { grid-area: header; display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
@@ -179,6 +179,9 @@
     .hint { grid-area: hint; color: var(--muted); font-size: 0.85rem; margin: 0; text-align: center; }
 
     /* ---------- headstock ---------- */
+    .debug { grid-area: debug; display: grid; gap: 8px; justify-items: start; }
+    .debug[hidden] { display: none; }
+    .debug pre { margin: 0; font-size: 0.75rem; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); }
     .guitar { grid-area: guitar; display: flex; justify-content: center; }
     .headstock { width: 100%; max-width: 380px; max-height: 50vh; overflow: visible; user-select: none; }
 
@@ -225,14 +228,14 @@
         padding-top: 32px;
         column-gap: 32px;
         grid-template-columns: 1fr 1fr;
-        grid-template-areas: "header header" "readout guitar" "controls guitar" "hint guitar";
+        grid-template-areas: "header header" "readout guitar" "controls guitar" "hint guitar" "debug debug";
         align-content: start;
       }
       .headstock { max-height: 70vh; }
       .hint { text-align: left; }
     }
   </style>
-<script type="module" crossorigin src="./simple-n9p6bej4.js"></script></head>
+<script type="module" crossorigin src="./simple-7ek6qt11.js"></script></head>
 
 <body>
   <main class="app">
@@ -296,6 +299,12 @@
     <section class="guitar" id="guitar"></section>
 
     <p class="hint" id="hint"></p>
+
+    <!-- Diagnostics, shown only with ?debug in the address. -->
+    <section class="debug" id="debug" hidden>
+      <pre id="debug-text"></pre>
+      <button id="debug-record" type="button">Record 8 s (WAV)</button>
+    </section>
   </main>
 
   
